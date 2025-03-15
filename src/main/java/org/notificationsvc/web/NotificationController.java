@@ -13,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -68,20 +66,6 @@ public class NotificationController {
                 .body(response);
     }
 
-    @GetMapping
-    public ResponseEntity<List<NotificationResponse>> getNotificationHistory(@RequestParam(name = "userId") UUID userId) {
-
-        List<NotificationResponse> notificationHistory = notificationService.getNotificationHistory(userId)
-                .stream()
-                .sorted(Comparator.comparing(Notification::getCreatedOn).reversed()) // Сортиране на ентититата преди мапване
-                .map(DtoMapper::fromNotification)
-                .toList();
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(notificationHistory);
-    }
-
     @PutMapping("/preferences")
     public ResponseEntity<NotificationPreferenceResponse> changeNotificationPreference(@RequestParam(name = "userId") UUID userId, @RequestParam(name = "enabled") boolean enabled) {
 
@@ -92,30 +76,6 @@ public class NotificationController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(responseDto);
-    }
-
-    // DELETE /api/v1/notifications
-    @DeleteMapping
-    public ResponseEntity<Void> clearNotificationHistory(@RequestParam(name = "userId") UUID userId) {
-
-        notificationService.clearNotifications(userId);
-
-        return ResponseEntity.ok().body(null);
-    }
-
-    //  Endpoint: GET /api/v1/notifications/test  = "Hello, unknown user!"
-    @GetMapping("/test")
-    public ResponseEntity<String> getHelloWorld(@RequestParam(name = "name") String name) {
-
-        return ResponseEntity.ok("Hello, " + name + " user!");
-    }
-
-    @PutMapping
-    public ResponseEntity<Void> retryFailedNotifications(@RequestParam(name = "userId") UUID userId) {
-
-        notificationService.retryFailedNotifications(userId);
-
-        return ResponseEntity.ok().body(null);
     }
 
     @PostMapping("/contact")
