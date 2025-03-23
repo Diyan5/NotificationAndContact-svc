@@ -52,16 +52,6 @@ public class DtoMapper {
                 .email(entity.getEmail())
                 .subject(entity.getSubject())
                 .message(entity.getMessage())
-                .createdAt(LocalDateTime.now())
                 .build();
     }
-
-//    public static ContactMessage fromContactRequest(ContactRequest dto) {
-//        return ContactMessage.builder()
-//                .name(dto.getName())
-//                .email(dto.getEmail())
-//                .subject(dto.getSubject())
-//                .message(dto.getMessage())
-//                .build();
-//    }
 }

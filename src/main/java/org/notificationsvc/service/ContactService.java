@@ -4,7 +4,6 @@ import jakarta.transaction.Transactional;
 import org.notificationsvc.repository.ContactRepository;
 import org.notificationsvc.web.dto.ContactRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,7 @@ import org.notificationsvc.model.ContactMessage;
 public class ContactService {
 
     private final ContactRepository contactRepository;
-    private final JavaMailSender mailSender; // 🔹 За изпращане на имейли
+    private final JavaMailSender mailSender;
 
     @Autowired
     public ContactService(ContactRepository contactRepository, JavaMailSender mailSender) {
@@ -38,6 +37,7 @@ public class ContactService {
     public void sendEmail(ContactRequest contactRequest) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setTo("paskalevdiyan@gmail.com");
+
         // mailMessage.setCc(contactRequest.getEmail()); if i want to sent a duplicate
         mailMessage.setSubject("New Contact Form Submission: " + contactRequest.getSubject());
         mailMessage.setText(
