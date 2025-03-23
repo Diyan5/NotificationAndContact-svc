@@ -38,6 +38,4 @@ public class Notification {
     private NotificationType type;
 
     private UUID userId;
-
-    private boolean isDeleted;
 }

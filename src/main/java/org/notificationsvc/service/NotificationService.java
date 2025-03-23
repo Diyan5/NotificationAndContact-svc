@@ -16,7 +16,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -85,13 +84,11 @@ public class NotificationService {
         message.setSubject(notificationRequest.getSubject());
         message.setText(notificationRequest.getBody());
 
-        // Entity building
         Notification notification = Notification.builder()
                 .subject(notificationRequest.getSubject())
                 .body(notificationRequest.getBody())
                 .createdOn(LocalDateTime.now())
                 .userId(userId)
-                .isDeleted(false)
                 .type(NotificationType.EMAIL)
                 .build();
 
