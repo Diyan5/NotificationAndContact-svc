@@ -12,7 +12,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.notificationsvc.web.dto.NotificationTypeRequest;
 import org.notificationsvc.web.dto.UpsertNotificationPreference;
 import org.springframework.mail.MailSender;
-
+import org.notificationsvc.model.Notification;
+import org.notificationsvc.model.NotificationStatus;
+import org.notificationsvc.web.dto.NotificationRequest;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.MailException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -119,6 +123,92 @@ public class NotificationServiceUTest {
         assertTrue(result.isEnabled());
         assertEquals(NotificationType.EMAIL, result.getType());
         verify(preferenceRepository, times(1)).save(any(NotificationPreference.class));
+    }
+
+    @Test
+    void givenDisabledNotificationPreference_whenSendNotification_thenThrowException() {
+        // Given
+        UUID userId = UUID.randomUUID();
+        NotificationRequest request = new NotificationRequest();
+        request.setUserId(userId);
+        request.setSubject("Test Subject");
+        request.setBody("Test Body");
+
+        NotificationPreference preference = NotificationPreference.builder()
+                .userId(userId)
+                .contactInfo("user@example.com")
+                .enabled(false)
+                .type(NotificationType.EMAIL)
+                .build();
+
+        when(preferenceRepository.findByUserId(userId)).thenReturn(Optional.of(preference));
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> notificationService.sendNotification(request));
+
+        assertTrue(exception.getMessage().contains(userId.toString()));
+    }
+
+    @Test
+    void givenValidNotificationRequest_whenSendNotification_thenSaveSucceededNotification() {
+        // Given
+        UUID userId = UUID.randomUUID();
+        NotificationRequest request = new NotificationRequest();
+        request.setUserId(userId);
+        request.setSubject("Test Subject");
+        request.setBody("Test Body");
+
+        NotificationPreference preference = NotificationPreference.builder()
+                .userId(userId)
+                .contactInfo("user@example.com")
+                .enabled(true)
+                .type(NotificationType.EMAIL)
+                .build();
+
+        when(preferenceRepository.findByUserId(userId)).thenReturn(Optional.of(preference));
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(i -> i.getArgument(0));
+
+        // When
+        Notification result = notificationService.sendNotification(request);
+
+        // Then
+        assertEquals(NotificationStatus.SUCCEEDED, result.getStatus());
+        assertEquals("Test Subject", result.getSubject());
+        assertEquals("Test Body", result.getBody());
+        assertEquals(userId, result.getUserId());
+
+        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+        verify(notificationRepository, times(1)).save(any(Notification.class));
+    }
+
+    @Test
+    void givenMailException_whenSendNotification_thenSaveFailedNotification() {
+        // Given
+        UUID userId = UUID.randomUUID();
+        NotificationRequest request = new NotificationRequest();
+        request.setUserId(userId);
+        request.setSubject("Test Subject");
+        request.setBody("Test Body");
+
+        NotificationPreference preference = NotificationPreference.builder()
+                .userId(userId)
+                .contactInfo("user@example.com")
+                .enabled(true)
+                .type(NotificationType.EMAIL)
+                .build();
+
+        when(preferenceRepository.findByUserId(userId)).thenReturn(Optional.of(preference));
+        doThrow(new MailException("SMTP error") {}).when(mailSender).send(any(SimpleMailMessage.class));
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(i -> i.getArgument(0));
+
+        // When
+        Notification result = notificationService.sendNotification(request);
+
+        // Then
+        assertEquals(NotificationStatus.FAILED, result.getStatus());
+        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+        verify(notificationRepository, times(1)).save(any(Notification.class));
     }
 
 }
